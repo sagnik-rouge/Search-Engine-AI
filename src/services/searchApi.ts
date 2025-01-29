@@ -6,7 +6,7 @@ interface SearchResult {
   source?: string;
   date?: string;
   username?: string;
-  postUrl?: string;
+  platform?: string;
 }
 
 interface SerperResponse {
@@ -125,7 +125,7 @@ export const searchWithSerper = async (query: string, apiKey: string): Promise<S
           title: result.title,
           link: result.link,
           snippet: result.snippet,
-          source: result.source,
+          platform: result.source, // Changed from source to platform
           username: result.username,
           source: 'social'
         })));
@@ -150,6 +150,7 @@ ${result.snippet || ''}
 ${result.link}
 ${result.date ? `Date: ${result.date}` : ''}
 ${result.username ? `Username: ${result.username}` : ''}
+${result.platform ? `Platform: ${result.platform}` : ''}
 `).join('\n')}
 
 Based on these search results, provide a comprehensive answer to the query. Include relevant information from web searches, news, and social media. Cite sources when appropriate.`;
