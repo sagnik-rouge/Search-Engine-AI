@@ -27,12 +27,11 @@ interface SerperResponse {
     imageUrl: string;
     link: string;
   }>;
-  social?: Array<{
+  peopleAlsoAsk?: Array<{
+    question: string;
+    answer: string;
     title: string;
     link: string;
-    snippet: string;
-    source: string;
-    username: string;
   }>;
 }
 
@@ -40,14 +39,17 @@ export const searchWithSerper = async (query: string, apiKey: string): Promise<S
   const results: SearchResult[] = [];
   
   try {
-    // Regular search
+    // Regular search (includes organic results and social media mentions)
     const searchResponse = await fetch('https://google.serper.dev/search', {
       method: 'POST',
       headers: {
         'X-API-KEY': apiKey,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ q: query }),
+      body: JSON.stringify({ 
+        q: query,
+        num: 10,
+      }),
     });
     
     if (searchResponse.ok) {
@@ -69,7 +71,10 @@ export const searchWithSerper = async (query: string, apiKey: string): Promise<S
         'X-API-KEY': apiKey,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ q: query }),
+      body: JSON.stringify({ 
+        q: query,
+        num: 10,
+      }),
     });
 
     if (newsResponse.ok) {
@@ -93,7 +98,10 @@ export const searchWithSerper = async (query: string, apiKey: string): Promise<S
         'X-API-KEY': apiKey,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ q: query }),
+      body: JSON.stringify({ 
+        q: query,
+        num: 10,
+      }),
     });
 
     if (imagesResponse.ok) {
@@ -108,34 +116,43 @@ export const searchWithSerper = async (query: string, apiKey: string): Promise<S
       }
     }
 
-    // Social search
-    const socialResponse = await fetch('https://google.serper.dev/social', {
-      method: 'POST',
-      headers: {
-        'X-API-KEY': apiKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ q: query }),
-    });
+    // Add social media results by searching with specific keywords
+    const socialQueries = [`${query} site:twitter.com`, `${query} site:instagram.com`];
+    
+    for (const socialQuery of socialQueries) {
+      const socialResponse = await fetch('https://google.serper.dev/search', {
+        method: 'POST',
+        headers: {
+          'X-API-KEY': apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          q: socialQuery,
+          num: 5,
+        }),
+      });
 
-    if (socialResponse.ok) {
-      const data: SerperResponse = await socialResponse.json();
-      if (data.social) {
-        results.push(...data.social.map(result => ({
-          title: result.title,
-          link: result.link,
-          snippet: result.snippet,
-          platform: result.source, // Changed from source to platform
-          username: result.username,
-          source: 'social'
-        })));
+      if (socialResponse.ok) {
+        const data: SerperResponse = await searchResponse.json();
+        if (data.organic) {
+          const platform = socialQuery.includes('twitter.com') ? 'Twitter' : 'Instagram';
+          results.push(...data.organic
+            .filter(result => result.link.includes(platform.toLowerCase()))
+            .map(result => ({
+              title: result.title,
+              link: result.link,
+              snippet: result.snippet,
+              platform: platform,
+              source: 'social'
+            })));
+        }
       }
     }
 
     return results;
   } catch (error) {
     console.error('Search API error:', error);
-    throw new Error('Failed to fetch search results');
+    throw error;
   }
 };
 
