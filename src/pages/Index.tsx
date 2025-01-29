@@ -10,7 +10,15 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [searchResult, setSearchResult] = useState<{
     answer: string;
-    sources?: Array<{ title: string; link: string }>;
+    sources?: Array<{
+      title: string;
+      link: string;
+      snippet?: string;
+      imageUrl?: string;
+      source?: string;
+      date?: string;
+      username?: string;
+    }>;
   } | null>(null);
   const [serperKey, setSerperKey] = useState('');
   const [geminiKey, setGeminiKey] = useState('');
@@ -33,10 +41,7 @@ const Index = () => {
       
       setSearchResult({
         answer,
-        sources: searchResults.map(result => ({
-          title: result.title,
-          link: result.link,
-        })),
+        sources: searchResults,
       });
     } catch (error) {
       toast({
@@ -83,7 +88,7 @@ const Index = () => {
           <SearchBar onSearch={handleSearch} isLoading={isLoading} />
           
           {isLoading && (
-            <div className="w-full max-w-2xl">
+            <div className="w-full max-w-4xl">
               <div className="search-animation h-32"></div>
             </div>
           )}
